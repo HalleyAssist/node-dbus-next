@@ -35,13 +35,14 @@
     "url": "http://github.com/dbusjs/node-dbus-next.git"
   },
   "dependencies": {
+    "@nornagon/put": "0.0.8",
     "event-stream": "3.3.4",
     "hexy": "^0.2.10",
     "jsbi": "^2.0.5",
     "long": "^4.0.0",
-    "@nornagon/put": "0.0.8",
     "safe-buffer": "^5.1.1",
-    "xml2js": "^0.4.17"
+    "xml2js": "^0.4.17",
+    "xml2json": "git+https://github.com/HalleyAssist/node-xml2json.git"
   },
   "optionalDependencies": {
     "abstract-socket": "^2.0.0"
@@ -77,7 +78,9 @@
   },
   "standard": {
     "parser": "babel-eslint",
-    "globals": [ "BigInt" ]
+    "globals": [
+      "BigInt"
+    ]
   },
   "engine": {
     "node": ">=6.3.0"
