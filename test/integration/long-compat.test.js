@@ -2,45 +2,38 @@
 
 const JSBI = require('jsbi');
 
-let dbus = require('../../');
+const dbus = require('../../');
 dbus.setBigIntCompat(true);
 
-let {
-  Interface, property, method, signal, DBusError,
-  ACCESS_READ, ACCESS_WRITE, ACCESS_READWRITE
+const {
+  Interface, method, DBusError
 } = dbus.interface;
 
-let {
-  MAX_INT64_STR, MIN_INT64_STR,
-  MAX_UINT64_STR, MIN_UINT64_STR
+const {
+  _getJSBIConstants
 } = require('../../lib/constants');
-
-const MAX_INT64 = JSBI.BigInt(MAX_INT64_STR);
-const MIN_INT64 = JSBI.BigInt(MIN_INT64_STR);
-const MAX_UINT64 = JSBI.BigInt(MAX_UINT64_STR);
-const MIN_UINT64 = JSBI.BigInt(MIN_UINT64_STR);
 
 const TEST_NAME = 'org.test.long_compat';
 const TEST_PATH = '/org/test/path';
 const TEST_IFACE = 'org.test.iface';
 const TEST_ERROR_PATH = 'org.test.name.error';
 
-let bus = dbus.sessionBus();
+const bus = dbus.sessionBus();
 bus.on('error', (err) => {
   console.log(`got unexpected connection error:\n${err.stack}`);
 });
 
 class LongInterface extends Interface {
-  @method({inSignature: 'x', outSignature: 'x'})
-  EchoSigned(what) {
+  @method({ inSignature: 'x', outSignature: 'x' })
+  EchoSigned (what) {
     if (what.prototype !== JSBI.BigInt.prototype) {
       throw new DBusError(TEST_ERROR_PATH, 'interface with long compat expected a JSBI BigInt for type x');
     }
     return what;
   }
 
-  @method({inSignature: 't', outSignature: 't'})
-  EchoUnsigned(what) {
+  @method({ inSignature: 't', outSignature: 't' })
+  EchoUnsigned (what) {
     if (what.prototype !== JSBI.BigInt.prototype) {
       throw new DBusError(TEST_ERROR_PATH, 'interface with long compat expected a JSBI BigInt for type t');
     }
@@ -48,7 +41,7 @@ class LongInterface extends Interface {
   }
 }
 
-let testIface = new LongInterface(TEST_IFACE);
+const testIface = new LongInterface(TEST_IFACE);
 
 beforeAll(async () => {
   await bus.requestName(TEST_NAME);
@@ -60,8 +53,9 @@ afterAll(() => {
 });
 
 test('test long type works correctly in compatibility mode', async () => {
-  let object = await bus.getProxyObject(TEST_NAME, TEST_PATH);
-  let test = object.getInterface(TEST_IFACE);
+  const { MAX_INT64, MIN_INT64, MAX_UINT64, MIN_UINT64 } = _getJSBIConstants();
+  const object = await bus.getProxyObject(TEST_NAME, TEST_PATH);
+  const test = object.getInterface(TEST_IFACE);
 
   // small numbers
   let what = JSBI.BigInt(-30);
@@ -82,11 +76,21 @@ test('test long type works correctly in compatibility mode', async () => {
   expect(result.prototype).toEqual(JSBI.BigInt.prototype);
   expect(JSBI.equal(result, what)).toEqual(true);
 
+  expect((async () => {
+    result = await test.EchoSigned(JSBI.add(what, JSBI.BigInt(1)));
+    return result.toString();
+  })()).rejects.toThrow();
+
   // int64 min
   what = MIN_INT64;
   result = await test.EchoSigned(what);
   expect(result.prototype).toEqual(JSBI.BigInt.prototype);
   expect(JSBI.equal(result, what)).toEqual(true);
+
+  await expect((async () => {
+    result = await test.EchoSigned(JSBI.subtract(what, JSBI.BigInt(1)));
+    return result.toString();
+  })()).rejects.toThrow();
 
   // uint64 max
   what = MAX_UINT64;
@@ -94,9 +98,25 @@ test('test long type works correctly in compatibility mode', async () => {
   expect(result.prototype).toEqual(JSBI.BigInt.prototype);
   expect(JSBI.equal(result, what)).toEqual(true);
 
+  await expect((async () => {
+    result = await test.EchoUnsigned(JSBI.add(what, JSBI.BigInt(1)));
+    return result.toString();
+  })()).rejects.toThrow();
+
   // uint64 min
   what = MIN_UINT64;
   result = await test.EchoUnsigned(what);
   expect(result.prototype).toEqual(JSBI.BigInt.prototype);
   expect(JSBI.equal(result, what)).toEqual(true);
+
+  await expect((async () => {
+    result = await test.EchoUnsigned(JSBI.subtract(what, JSBI.BigInt(1)));
+    return result.toString();
+  })()).rejects.toThrow();
+
+  // int conversion
+  what = 500;
+  result = await test.EchoUnsigned(what);
+  expect(result.prototype).toEqual(JSBI.BigInt.prototype);
+  expect(JSBI.equal(result, JSBI.BigInt(what))).toEqual(true);
 });

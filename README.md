@@ -2,7 +2,9 @@
 
 The next great DBus library for NodeJS.
 
-[Documentation](https://acrisci.github.io/doc/node-dbus-next/).
+[Documentation](https://acrisci.github.io/doc/node-dbus-next/)
+
+[Chat](https://discord.gg/UdbXHVX)
 
 ## About
 
@@ -119,6 +121,12 @@ class ExampleInterface extends Interface {
   ThrowsError() {
     // the error is returned to the client
     throw new DBusError('org.test.iface.Error', 'something went wrong');
+  }
+
+  @method({inSignature: '', outSignature: '', noReply: true})
+  NoReply() {
+    // by setting noReply to true, dbus-next will NOT send a return reply through dbus 
+    // after the method is called.
   }
 
   @signal({signature: 's'})
