@@ -138,7 +138,6 @@ declare module 'dbus-next' {
         busAddress?: string;
     }
 
-    export function setBigIntCompat(state: boolean): void;
     export function systemBus(): MessageBus;
     export function sessionBus(options?: BusOptions): MessageBus;
 }
