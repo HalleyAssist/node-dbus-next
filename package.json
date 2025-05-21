@@ -36,7 +36,6 @@
   },
   "dependencies": {
     "@nornagon/put": "0.0.8",
-    "long": "^4.0.0",
     "xml2json": "git+https://github.com/HalleyAssist/node-xml2json.git"
   },
   "optionalDependencies": {
